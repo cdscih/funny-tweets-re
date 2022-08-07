@@ -1,0 +1,26 @@
+version: '3'
+services:
+  dev-env:
+    volumes:
+      # Mount the root folder that contains .git
+      - ..:/workspace
+      # [Optional] For reusing Git SSH keys.
+      # - ~/.ssh:/root/.ssh-local:ro
+      # Map the Docker sockets, same as using -v argument
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    build:
+      context: ..
+      target: dev
+      dockerfile: Dockerfile
+      args:
+        # Run as "privileged" so we can access the Docker Host (possibly on Windows 10) from inside the container
+        privileged: "true"
+    env_file:
+      - ../.env
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+    # command: /bin/sh -c "while sleep 1000; do :; done"
+    # links:
+    #   - container-2
+    ports:
+      - '8000:8000'

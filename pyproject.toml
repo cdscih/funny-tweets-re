@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "funny-tweets-re"
+version = "0.1.0"
+description = "Funny tweets retweet bot"
+authors = ["Claudio <claudio.work69@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+httpx = "^0.23.0"
+
+[tool.poetry.dev-dependencies]
+pylint = "^2.14.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

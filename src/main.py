@@ -3,6 +3,7 @@ import logging
 import random
 
 from twitter import Twitter
+from firestore import Firestore
 
 logging.basicConfig(
     level=os.environ.get("LOGGER_LEVEL", "INFO"),
@@ -21,24 +22,20 @@ tw = Twitter(
     }
 )
 
+fs = Firestore()
+
 try:
-    logger.info("Retrieving the list of tweets to possibly retweet..")
-
     followed_users = tw.get_followed_users_list()
-
-    tweets = []
-
+    new_retweets_candidates = []
     for user in followed_users:
-        logger.info(f"Retrieving tweets of {user.username}")
-        tweets.extend(tw.get_recent_tweets_ids(user.id))
-
+        new_retweets_candidates.extend(tw.get_recent_tweets_ids(user))
+    fs.save_new_retweets_candidates(new_retweets_candidates)
+    tweets = fs.get_retweets_candidates()
+    if len(tweets) == 0:
+        raise ValueError("No retweets candidate found")
     chosen_tweet = random.choice(tweets)
-
-    logger.info(f"Posting retweet of {chosen_tweet}")
-    tw.post_retweet(chosen_tweet)
-
-    logger.info(f"Successfully retweeted {chosen_tweet}")
-
+    tw.post_retweet(chosen_tweet.id)
+    fs.save_posted_retweet(chosen_tweet)
 except Exception as err:
     logger.error(err)
     raise err

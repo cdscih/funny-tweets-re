@@ -22,14 +22,16 @@
 				"python.defaultInterpreterPath": "/venv/bin/python",
 				"python.linting.enabled": true,
 				"python.formatting.provider": "black",
-				"python.formatting.blackPath": "/venv/bin/black"
+				"python.formatting.blackPath": "/venv/bin/black",
+				"editor.formatOnPaste": true
 			},
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
 				"ms-python.python",
 				"ms-python.vscode-pylance",
 				"jeff-hykin.better-dockerfile-syntax",
-				"ms-azuretools.vscode-docker"
+				"ms-azuretools.vscode-docker",
+				"ms-vscode.makefile-tools"
 			]
 		}
 	},

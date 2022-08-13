@@ -13,15 +13,13 @@ services:
       target: dev
       dockerfile: Dockerfile
       args:
-        # Run as "privileged" so we can access the Docker Host (possibly on Windows 10) from inside the container
+        # Run as "privileged" so we can access the Docker Host from inside the container
         privileged: "true"
     env_file:
       - ../.env
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
     # command: /bin/sh -c "while sleep 1000; do :; done"
-    # links:
-    #   - container-2
     ports:
       - '8000:8000'
       - '5000:5000'

@@ -7,10 +7,11 @@ class User:
     id: str
     name: str
     username: str
+    followers_count: str
 
 
 @dataclass
 class Tweet:
     id: str
     author_id: str
-    text: Optional[str] = None
+    like_count: int

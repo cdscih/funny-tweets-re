@@ -1,9 +1,12 @@
 import os
 import logging
 import random
+import json
 
 from twitter import Twitter
 from firestore import Firestore
+
+from utils import choose_tweet_to_retweet
 
 logging.basicConfig(
     level=os.environ.get("LOGGER_LEVEL", "INFO"),
@@ -22,7 +25,14 @@ tw = Twitter(
     }
 )
 
-fs = Firestore()
+fs = Firestore(
+    **{
+        "service_account": json.loads(
+            os.environ.get("STRINGIFIED_GOOGLE_SERVICE_ACCOUNT").replace("\\\n", "\\n"),
+            strict=False,
+        )
+    }
+)
 
 try:
     followed_users = tw.get_followed_users_list()
@@ -33,7 +43,7 @@ try:
     tweets = fs.get_retweets_candidates()
     if len(tweets) == 0:
         raise ValueError("No retweets candidate found")
-    chosen_tweet = random.choice(tweets)
+    chosen_tweet = choose_tweet_to_retweet(tweets, followed_users)
     tw.post_retweet(chosen_tweet.id)
     fs.save_posted_retweet(chosen_tweet)
 except Exception as err:

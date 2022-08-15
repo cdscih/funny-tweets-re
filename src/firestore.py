@@ -16,9 +16,8 @@ class Firestore:
     TWEETS_CANDIDATES_COLLECTION = "tweets_candidates"
     posted_retweets = []
 
-    def __init__(self):
-        # TODO: use secret manager from gcp
-        cred = credentials.Certificate("service_account.json")
+    def __init__(self, service_account: str):
+        cred = credentials.Certificate(service_account)
         firebase_admin.initialize_app(cred)
         self.client = firestore.client()
         self._cleanup()
@@ -48,12 +47,22 @@ class Firestore:
         for tweet in retweets_candidates:
             self.client.collection(self.TWEETS_CANDIDATES_COLLECTION).document(
                 tweet.id
-            ).set({"author_id": tweet.author_id})
+            ).set(
+                {
+                    "tweet_id": tweet.id,
+                    "author_id": tweet.author_id,
+                    "like_count": tweet.like_count,
+                }
+            )
 
     def get_retweets_candidates(self) -> list[Tweet]:
         logger.info("Retrieving retweets candidates")
         return [
-            Tweet(id=doc.id, author_id=doc.get("author_id"))
+            Tweet(
+                id=doc.id,
+                author_id=doc.get("author_id"),
+                like_count=doc.get("like_count"),
+            )
             for doc in self.client.collection(self.TWEETS_CANDIDATES_COLLECTION).get()
         ]
 
@@ -66,7 +75,11 @@ class Firestore:
     def save_posted_retweet(self, tweet: Tweet):
         logger.info("Storing posted retweet")
         self.client.collection(self.POSTED_RETWEETS_COLLECTION).document(tweet.id).set(
-            {"author_id": tweet.author_id}
+            {
+                "tweet_id": tweet.id,
+                "author_id": tweet.author_id,
+                "like_count": tweet.like_count,
+            }
         )
         self.delete_tweet_from_candidates(tweet)
 

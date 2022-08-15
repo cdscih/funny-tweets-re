@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 class Firestore:
 
     POSTED_RETWEETS_COLLECTION = "posted_retweets"
-    TWEETS_CANDIDATES_COLLECTION = "tweets_candidates"
     posted_retweets = []
 
     def __init__(self, service_account: str):
@@ -23,54 +22,15 @@ class Firestore:
         self._cleanup()
         self.get_posted_retweets()
 
-    def __delete_old(self, collection: str):
-        for doc in self.client.collection(collection).get():
-            if doc.create_time < pendulum.now().subtract(
-                months=int(os.environ.get("EXPIRE_AFTER_MONTHS", 12))
-            ):
-                self.client.collection(collection).document(doc.id).delete()
-
     def _cleanup(self):
-        collections = [
-            self.POSTED_RETWEETS_COLLECTION,
-            self.TWEETS_CANDIDATES_COLLECTION,
-        ]
-        logger.info(f"Cleaning up collections: {collections}")
-        for collection in collections:
-            self.__delete_old(collection)
-
-    def save_new_retweets_candidates(self, tweets: list[Tweet]):
-        retweets_candidates = list(
-            filter(lambda tweet: tweet.id not in self.posted_retweets, tweets)
-        )
-        logger.info(f"Saving {len(retweets_candidates)} retweets candidates")
-        for tweet in retweets_candidates:
-            self.client.collection(self.TWEETS_CANDIDATES_COLLECTION).document(
-                tweet.id
-            ).set(
-                {
-                    "tweet_id": tweet.id,
-                    "author_id": tweet.author_id,
-                    "like_count": tweet.like_count,
-                }
-            )
-
-    def get_retweets_candidates(self) -> list[Tweet]:
-        logger.info("Retrieving retweets candidates")
-        return [
-            Tweet(
-                id=doc.id,
-                author_id=doc.get("author_id"),
-                like_count=doc.get("like_count"),
-            )
-            for doc in self.client.collection(self.TWEETS_CANDIDATES_COLLECTION).get()
-        ]
-
-    def delete_tweet_from_candidates(self, tweet: Tweet):
-        logger.info("Deleting posted retweet from tweets candidates")
-        self.client.collection(self.TWEETS_CANDIDATES_COLLECTION).document(
-            tweet.id
-        ).delete()
+        logger.info(f"Cleaning up {self.POSTED_RETWEETS_COLLECTION} collection")
+        for doc in self.client.collection(self.POSTED_RETWEETS_COLLECTION).get():
+            if doc.create_time < pendulum.now().subtract(
+                months=int(os.environ.get("EXPIRE_AFTER_MONTHS", 1))
+            ):
+                self.client.collection(self.POSTED_RETWEETS_COLLECTION).document(
+                    doc.id
+                ).delete()
 
     def save_posted_retweet(self, tweet: Tweet):
         logger.info("Storing posted retweet")
@@ -81,7 +41,6 @@ class Firestore:
                 "like_count": tweet.like_count,
             }
         )
-        self.delete_tweet_from_candidates(tweet)
 
     def get_posted_retweets(self):
         logger.info("Retrieving posted retweets")

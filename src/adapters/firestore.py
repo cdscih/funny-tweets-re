@@ -13,14 +13,12 @@ logger = logging.getLogger(__name__)
 class Firestore:
 
     POSTED_RETWEETS_COLLECTION = "posted_retweets"
-    posted_retweets = []
 
     def __init__(self, service_account: str):
         cred = credentials.Certificate(service_account)
         firebase_admin.initialize_app(cred)
         self.client = firestore.client()
         self._cleanup()
-        self.get_posted_retweets()
 
     def _cleanup(self):
         logger.info(f"Cleaning up {self.POSTED_RETWEETS_COLLECTION} collection")
@@ -44,8 +42,7 @@ class Firestore:
 
     def get_posted_retweets(self):
         logger.info("Retrieving posted retweets")
-        self.posted_retweets = {
+        return {
             doc.id
             for doc in self.client.collection(self.POSTED_RETWEETS_COLLECTION).get()
         }
-        return self.posted_retweets

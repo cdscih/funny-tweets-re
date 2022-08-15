@@ -1,6 +1,8 @@
 # Description
 
-Funny tweets retweet bot. Example bot: https://twitter.com/cd_funny_tweets.
+Funny tweets retweet bot.  
+
+Example bot: https://twitter.com/cd_funny_tweets.
 
 # Instructions
 
@@ -10,7 +12,7 @@ Funny tweets retweet bot. Example bot: https://twitter.com/cd_funny_tweets.
 
 ## Generation of the environment variables
 
-The flow used from the script to generate the lifelong access token is called "OAuth 2.0 Authorization Code Flow with PKCE".
+The flow used from the script to generate the lifelong access token is called "3-legged OAuth flow". More info [here](https://developer.twitter.com/en/docs/authentication/oauth-1-0a/obtaining-user-access-tokens)
 
 The following env variables should be populated:
 ```bash

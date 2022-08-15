@@ -28,7 +28,7 @@ tw = Twitter(
 fs = Firestore(
     **{
         "service_account": json.loads(
-            os.environ.get("STRINGIFIED_GOOGLE_SERVICE_ACCOUNT").replace("\\\n", "\\n"),
+            os.environ.get("GOOGLE_SERVICE_ACCOUNT"),
             strict=False,
         )
     }

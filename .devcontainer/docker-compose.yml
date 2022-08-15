@@ -10,7 +10,7 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
     build:
       context: ..
-      target: dev
+      target: DEV
       dockerfile: Dockerfile
       args:
         # Run as "privileged" so we can access the Docker Host from inside the container

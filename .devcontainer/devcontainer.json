@@ -23,7 +23,8 @@
 				"python.linting.enabled": true,
 				"python.formatting.provider": "black",
 				"python.formatting.blackPath": "/venv/bin/black",
-				"editor.formatOnPaste": true
+				"editor.formatOnPaste": true,
+				"editor.formatOnSave": true
 			},
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [

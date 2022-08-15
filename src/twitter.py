@@ -34,28 +34,46 @@ class Twitter:
         )
 
     def get_followed_users_list(self) -> list[User]:
-        return [User(id=1480156703412920327, name="claudio", username="cdscih")]
         res = self.oauth.get(
-            f"https://api.twitter.com/2/users/{self.user_id}/following"
+            f"https://api.twitter.com/2/users/{self.user_id}/following?user.fields=public_metrics"
         )
         if res.status_code != 200:
             raise Exception(f"Request returned an error: {res.status_code} {res.text}")
-        return [User(**user) for user in res.json()["data"]]
+        return [
+            User(
+                **{
+                    "id": user["id"],
+                    "name": user["name"],
+                    "username": user["username"],
+                    "followers_count": user["public_metrics"]["followers_count"],
+                }
+            )
+            for user in res.json()["data"]
+        ]
 
     def get_recent_tweets_ids(self, user: User) -> list[str]:
         logger.info(f"Retrieving tweets of user {user.username}")
         res = self.oauth.get(
-            f"https://api.twitter.com/2/users/{user.id}/tweets?expansions=author_id"
+            f"https://api.twitter.com/2/users/{user.id}/tweets?expansions=author_id&tweet.fields=public_metrics"
         )
         if res.status_code != 200:
             logger.error(f"Request returned an error: {res.status_code} {res.text}")
             return []
-        return [Tweet(**tweet) for tweet in res.json()["data"]]
+        return [
+            Tweet(
+                **{
+                    "id": tweet["id"],
+                    "author_id": tweet["author_id"],
+                    "like_count": tweet["public_metrics"]["like_count"],
+                }
+            )
+            for tweet in res.json()["data"]
+        ]
 
-    def get_tweets_ids_from_liked(self):
+    def get_tweets_ids_from_liked(self) -> list[Tweet]:
         ...
 
-    def get_tweets_ids_from_mentions(self):
+    def get_tweets_ids_from_mentions(self, bot_owner_user_id: str) -> list[Tweet]:
         ...
 
     def post_retweet(self, tweet_id: str):

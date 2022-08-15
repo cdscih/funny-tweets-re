@@ -1,12 +1,11 @@
-from requests_oauthlib import OAuth1Session
+from entities import Tweet, User
 
 
-def get_twitter_user_ids_from_usernames(
-    oauth_sessiong: OAuth1Session, usernames: str
-) -> list[str]:
-    res = oauth_sessiong.get(
-        f'https://api.twitter.com/2/users/by?usernames={",".join(usernames)}'
+def choose_tweet_to_retweet(tweets: list[Tweet], users: list[User]) -> Tweet:
+    users_map = {usr.id: usr.followers_count for usr in users}
+    return max(
+        tweets,
+        key=lambda t: t.like_count / users_map[t.author_id]
+        if users_map[t.author_id] != 0
+        else 0,
     )
-    if res.status_code != 200:
-        raise Exception(f"Request returned an error: {res.status_code} {res.text}")
-    return [user["id"] for user in res.json()["data"]]

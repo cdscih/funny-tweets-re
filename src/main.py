@@ -36,11 +36,9 @@ fs = Firestore(
 
 try:
     followed_users = tw.get_followed_users_list()
-    new_retweets_candidates = []
+    tweets = []
     for user in followed_users:
-        new_retweets_candidates.extend(tw.get_recent_tweets_ids(user))
-    fs.save_new_retweets_candidates(new_retweets_candidates)
-    tweets = fs.get_retweets_candidates()
+        tweets.extend(tw.get_recent_tweets_ids(user))
     if len(tweets) == 0:
         raise ValueError("No retweets candidate found")
     chosen_tweet = choose_tweet_to_retweet(tweets, followed_users)

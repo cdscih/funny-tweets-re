@@ -6,7 +6,6 @@ services:
       - ..:/workspace
       # [Optional] For reusing Git SSH keys.
       # - ~/.ssh:/root/.ssh-local:ro
-      # Map the Docker sockets, same as using -v argument
       - "/var/run/docker.sock:/var/run/docker.sock"
     build:
       context: ..

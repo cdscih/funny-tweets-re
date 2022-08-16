@@ -28,9 +28,13 @@ RUN apt-get update; \
 RUN curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
   chmod +x /usr/local/bin/docker-compose
 
-FROM python:3.9-slim as PROD
+FROM python:3.9-slim as prod
 COPY --from=BUILD /venv/lib/python3.9/ /usr/local/lib/python3.9/
 
 COPY src/ src/
 
+FROM prod as ONE_OFF
 CMD ["python", "src/main.py"]
+
+FROM prod as SCHEDULED
+CMD ["python", "src/main.py", "--scheduled"]

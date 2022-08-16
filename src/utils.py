@@ -6,6 +6,6 @@ def choose_tweet_to_retweet(tweets: list[Tweet], users: list[User]) -> Tweet:
     return max(
         tweets,
         key=lambda t: t.like_count / users_map[t.author_id]
-        if users_map[t.author_id] != 0
+        if users_map.get(t.author_id, 0) != 0
         else 0,
     )

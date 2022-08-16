@@ -18,7 +18,7 @@ The flow used from the script to generate the lifelong access token is called "3
 
 The following env variables should be populated:
 ```bash
-USER_ID=
+OWNER_USER_ID=
 API_KEY=
 API_SECRET_KEY=
 ACCESS_TOKEN=
@@ -26,7 +26,7 @@ ACCESS_TOKEN_SECRET=
 GOOGLE_SERVICE_ACCOUNT=
 ```
 
-The `USER_ID` is the unique identifier associated with the bot's account. Find it using the script `make get_twitter_user_id`.  
+The `OWNER_USER_ID` is the unique identifier associated with the twitter account of the bot's owner. Find it using the script `make get_twitter_user_id` and pasting the owner's twitter username.  
 Both the `API_KEY` and `API_SECRET_KEY` you'll find in the developer twitter portal of your account.  
 To generate the access tokens, instead, use the script `make generate_token`.  
 After launching the script, open the url in the terminal, give authorization to the app to use the account, and extract the `oauth_verifier` from the params of the url you get redirected to.  
@@ -47,7 +47,7 @@ The `GOOGLE_SERVICE_ACCOUNT` should be the copy-paste of the google service acco
 
 The retweets candidates will be, in order:
 1. [x] liked tweets
-2. [ ] owner's mentions of the bot's account
+2. [x] owner's mentions of the bot's account
 3. [x] followed accounts (must only be 100% jokes accounts)
 
 ## (2) Retweet

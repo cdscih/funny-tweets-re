@@ -2,8 +2,6 @@
 
 Funny tweets retweet bot.  
 
-Example bot: https://twitter.com/cd_funny_tweets.
-
 # Instructions
 
 1. Generate your access token with the account you want to use the bot on

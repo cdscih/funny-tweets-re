@@ -46,8 +46,8 @@ The `GOOGLE_SERVICE_ACCOUNT` should be the copy-paste of the google service acco
 ## (1) Extraction
 
 The retweets candidates will be, in order:
-1. [x] liked tweets
-2. [x] owner's mentions of the bot's account
+1. [x] owner's mentions of the bot's account
+2. [x] liked tweets
 3. [x] followed accounts (must only be 100% jokes accounts)
 
 ## (2) Retweet

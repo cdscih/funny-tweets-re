@@ -56,6 +56,11 @@ class Twitter:
         res = self.oauth.get(
             f"https://api.twitter.com/2/users/{user.id}/tweets?expansions=author_id&tweet.fields=public_metrics"
         )
+
+    def get_tweets_ids_from_liked(self) -> list[Tweet]:
+        res = self.oauth.get(
+            f"https://api.twitter.com/2/users/{self.user_id}/liked_tweets?expansions=author_id&tweet.fields=public_metrics"
+        )
         if res.status_code != 200:
             logger.error(f"Request returned an error: {res.status_code} {res.text}")
             return []
@@ -69,9 +74,6 @@ class Twitter:
             )
             for tweet in res.json()["data"]
         ]
-
-    def get_tweets_ids_from_liked(self) -> list[Tweet]:
-        ...
 
     def get_tweets_ids_from_mentions(self, bot_owner_user_id: str) -> list[Tweet]:
         ...

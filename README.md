@@ -1,3 +1,7 @@
+
+[![Heroku Deploy](https://github.com/cdscih/funny-tweets-re/actions/workflows/heroku-deploy.yml/badge.svg)](https://github.com/cdscih/funny-tweets-re/actions/workflows/heroku-deploy.yml)
+
+
 # Description
 
 Funny tweets retweet bot.  
@@ -41,10 +45,10 @@ The `GOOGLE_SERVICE_ACCOUNT` should be the copy-paste of the google service acco
 
 ## (1) Extraction
 
-The tweets to potentially use should come from:
-1. [ ] liked tweets
-2. [x] followed accounts (must only be 100% jokes accounts)
-3. [ ] cdscih's mentions of the bot's account
+The retweets candidates will be, in order:
+1. [x] liked tweets
+2. [ ] owner's mentions of the bot's account
+3. [x] followed accounts (must only be 100% jokes accounts)
 
 ## (2) Retweet
 

@@ -31,6 +31,7 @@ class Twitter:
 
         try:
             self.user = self._get_bot_user()
+            logging.info(f"User {self.user.username} set as bot account")
         except Exception as err:
             raise ValueError("Twitter credentials missing or invalid.")
 
@@ -48,6 +49,7 @@ class Twitter:
         )
 
     def get_followed_users_list(self) -> list[User]:
+        logger.info(f"Retrieving list of users followed by the bot")
         res = self.oauth.get(
             f"https://api.twitter.com/2/users/{self.user.id}/following?user.fields=public_metrics"
         )
@@ -85,6 +87,7 @@ class Twitter:
         ]
 
     def get_tweets_from_liked(self) -> tuple[list[Tweet], list[User]]:
+        logger.info("Retrieving tweets liked from the bot")
         res = self.oauth.get(
             f"https://api.twitter.com/2/users/{self.user.id}/liked_tweets?expansions=author_id&tweet.fields=public_metrics&user.fields=public_metrics"
         )
@@ -120,6 +123,7 @@ class Twitter:
         return tweets, users
 
     def get_tweets_from_owner_mentions(self) -> tuple[list[Tweet], list[User]]:
+        logger.info("Retrieving tweets from the owner's mentions of the bot")
         params = {"query": f"from:{self.owner_user_id} @{self.user.username} is:reply"}
         res = self.oauth.get(
             f"https://api.twitter.com/2/tweets/search/recent?tweet.fields=author_id,public_metrics&expansions=referenced_tweets.id,referenced_tweets.id.author_id&user.fields=public_metrics",

@@ -21,6 +21,8 @@
 			"settings": {
 				"python.defaultInterpreterPath": "/venv/bin/python",
 				"python.linting.enabled": true,
+				"python.linting.flake8Enabled": true,
+				"python.linting.flake8Path": "/venv/bin/flake8",
 				"python.formatting.provider": "black",
 				"python.formatting.blackPath": "/venv/bin/black",
 				"editor.formatOnPaste": true,

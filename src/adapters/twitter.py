@@ -1,14 +1,14 @@
-import os
-import json
 import logging
-
-import functools
 
 from requests_oauthlib import OAuth1Session
 
 from entities import User, Tweet
 
 logger = logging.getLogger(__name__)
+
+
+class InvalidCredentials(ValueError()):
+    ...
 
 
 class Twitter:
@@ -31,30 +31,42 @@ class Twitter:
 
         try:
             self.user = self._get_bot_user()
-            logging.info(f"User {self.user.username} set as bot account")
+            logging.info(f"User {self.user} set as bot account")
         except Exception as err:
-            raise ValueError("Twitter credentials missing or invalid.")
+            logger.error(err)
+            raise InvalidCredentials("Twitter credentials missing or invalid.")
 
     def _get_bot_user(self) -> User:
         res = self.oauth.get(
-            "https://api.twitter.com/2/users/me?user.fields=public_metrics",
-        ).json()["data"]
+            "https://api.twitter.com/2/users/me",
+            params={"user.fields": "public_metrics"},
+        )
+        res.raise_for_status()
+
+        user = res.json()["data"]
+
         return User(
             **{
-                "id": res["id"],
-                "name": res["name"],
-                "username": res["username"],
-                "followers_count": res["public_metrics"]["followers_count"],
+                "id": user["id"],
+                "name": user["name"],
+                "username": user["username"],
+                "followers_count": user["public_metrics"]["followers_count"],
             }
         )
 
     def get_followed_users_list(self) -> list[User]:
-        logger.info(f"Retrieving list of users followed by the bot")
+        logger.info("Retrieving list of users followed by the bot")
+
         res = self.oauth.get(
-            f"https://api.twitter.com/2/users/{self.user.id}/following?user.fields=public_metrics"
+            f"https://api.twitter.com/2/users/{self.user.id}/following",
+            params={"user.fields": "public_metrics"},
         )
-        if res.status_code != 200:
-            raise Exception(f"Request returned an error: {res.status_code} {res.text}")
+        res.raise_for_status()
+
+        if not res.json().get("data"):
+            logger.info("No users found followed from the bot")
+            return []
+
         return [
             User(
                 **{
@@ -68,14 +80,49 @@ class Twitter:
         ]
 
     def get_recent_tweets(self, user: User) -> list[Tweet]:
-        logger.info(f"Retrieving tweets of user {user.username}")
+        logger.info(f"Retrieving tweets of user {user}")
+
         res = self.oauth.get(
-            f"https://api.twitter.com/2/users/{user.id}/tweets?expansions=author_id&tweet.fields=public_metrics"
+            f"https://api.twitter.com/2/users/{user.id}/tweets",
+            params={"expansions": "author_id", "tweet.fields": "public_metrics"},
         )
-        if res.status_code != 200:
-            logger.error(f"Request returned an error: {res.status_code} {res.text}")
+        res.raise_for_status()
+
+        tweets = res.json().get("data")
+
+        if not tweets:
+            logger.info(f"No recent tweets found for user {user}")
             return []
+
         return [
+            Tweet(
+                **{
+                    "id": tweet["id"],
+                    "author_id": tweet["author_id"],
+                    "like_count": tweet["public_metrics"]["like_count"],
+                }
+            )
+            for tweet in tweets
+        ]
+
+    def get_tweets_from_liked(self) -> tuple[list[Tweet], list[User]]:
+        logger.info("Retrieving tweets liked from the bot")
+
+        res = self.oauth.get(
+            f"https://api.twitter.com/2/users/{self.user.id}/liked_tweets",
+            params={
+                "expansions": "author_id",
+                "tweet.fields": "author_id,public_metrics",
+                "user.fields": "public_metrics",
+            },
+        )
+        res.raise_for_status()
+
+        if not res.json().get("data"):
+            logger.info("No available liked tweets found")
+            return [], []
+
+        tweets = [
             Tweet(
                 **{
                     "id": tweet["id"],
@@ -86,28 +133,6 @@ class Twitter:
             for tweet in res.json()["data"]
         ]
 
-    def get_tweets_from_liked(self) -> tuple[list[Tweet], list[User]]:
-        logger.info("Retrieving tweets liked from the bot")
-        res = self.oauth.get(
-            f"https://api.twitter.com/2/users/{self.user.id}/liked_tweets?expansions=author_id&tweet.fields=public_metrics&user.fields=public_metrics"
-        )
-        if res.status_code != 200:
-            logger.error(f"Request returned an error: {res.status_code} {res.text}")
-            return []
-
-        res_data = res.json()
-
-        tweets = [
-            Tweet(
-                **{
-                    "id": tweet["id"],
-                    "author_id": tweet["author_id"],
-                    "like_count": tweet["public_metrics"]["like_count"],
-                }
-            )
-            for tweet in res_data["data"]
-        ]
-
         users = [
             User(
                 **{
@@ -117,23 +142,30 @@ class Twitter:
                     "followers_count": user["public_metrics"]["followers_count"],
                 }
             )
-            for user in res_data["includes"]["users"]
+            for user in res.json()["includes"]["users"]
         ]
 
         return tweets, users
 
     def get_tweets_from_owner_mentions(self) -> tuple[list[Tweet], list[User]]:
         logger.info("Retrieving tweets from the owner's mentions of the bot")
-        params = {"query": f"from:{self.owner_user_id} @{self.user.username} is:reply"}
-        res = self.oauth.get(
-            f"https://api.twitter.com/2/tweets/search/recent?tweet.fields=author_id,public_metrics&expansions=referenced_tweets.id,referenced_tweets.id.author_id&user.fields=public_metrics",
-            params=params,
-        )
-        if res.status_code != 200:
-            logger.error(f"Request returned an error: {res.status_code} {res.text}")
-            return []
 
-        res_data = res.json()["includes"]
+        res = self.oauth.get(
+            "https://api.twitter.com/2/tweets/search/recent",
+            params={
+                "query": f"from:{self.owner_user_id} @{self.user.username} is:reply",
+                "tweet.fields": "author_id,public_metrics",
+                "user.fields": "public_metrics",
+                "expansions": "referenced_tweets.id,referenced_tweets.id.author_id",
+            },
+        )
+        res.raise_for_status()
+
+        data = res.json().get("includes")
+
+        if not data:
+            logger.info("No available tweets found from owner mentions")
+            return [], []
 
         tweets = [
             Tweet(
@@ -143,7 +175,7 @@ class Twitter:
                     "like_count": tweet["public_metrics"]["like_count"],
                 }
             )
-            for tweet in res_data["tweets"]
+            for tweet in data["tweets"]
         ]
 
         users = [
@@ -155,19 +187,18 @@ class Twitter:
                     "followers_count": user["public_metrics"]["followers_count"],
                 }
             )
-            for user in res_data["users"]
+            for user in data["users"]
         ]
 
         return tweets, users
 
-    def post_retweet(self, tweet_id: str):
-        logger.info(f"Posting retweet for tweet {tweet_id}")
+    def post_retweet(self, tweet: Tweet):
+        logger.info(f"Posting retweet for tweet {tweet}")
+
         res = self.oauth.post(
             f"https://api.twitter.com/2/users/{self.user.id}/retweets",
-            json={"tweet_id": tweet_id},
+            json={"tweet_id": tweet.id},
         )
-        if res.status_code != 200:
-            err_msg = f"Request returned an error: {res.status_code} {res.text}"
-            logger.error(err_msg)
-            raise Exception(err_msg)
-        logger.info(f"Successfully retweeted {tweet_id}")
+        res.raise_for_status()
+
+        logger.info(f"Successfully retweeted {tweet}")

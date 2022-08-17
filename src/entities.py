@@ -1,4 +1,3 @@
-from typing import Optional
 from dataclasses import dataclass
 
 
@@ -8,6 +7,9 @@ class User:
     name: str
     username: str
     followers_count: str
+
+    def __repr__(self):
+        return f"@{self.username}"
 
     def __hash__(self):
         return int(self.id)
@@ -21,3 +23,6 @@ class Tweet:
 
     def __hash__(self):
         return int(self.id)
+
+    def __repr__(self):
+        return self.id

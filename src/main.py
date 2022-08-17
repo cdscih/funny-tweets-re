@@ -2,7 +2,6 @@ import os
 import sys
 import json
 import time
-import random
 import logging
 import schedule
 
@@ -48,13 +47,11 @@ def launch():
 
         # 2nd priority to tweets liked
         if len(tweets) == 0:
-            logger.info("No available tweets found from owner's mentions")
             tweets, users = tw.get_tweets_from_liked()
             tweets = list(filter(lambda t: t.id not in posted_retweets, tweets))
 
         # 3rd priority to tweets of followed users
         if len(tweets) == 0:
-            logger.info("No available tweets found from the bot's liked tweets")
             users = tw.get_followed_users_list()
             for user in users:
                 tweets.extend(tw.get_recent_tweets(user))
@@ -65,7 +62,7 @@ def launch():
 
         chosen_tweet = choose_tweet_to_retweet(tweets, users)
 
-        tw.post_retweet(chosen_tweet.id)
+        tw.post_retweet(chosen_tweet)
         fs.save_posted_retweet(chosen_tweet)
 
     except Exception as err:

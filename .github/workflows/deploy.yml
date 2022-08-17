@@ -1,4 +1,4 @@
-name: Heroku Deploy
+name: Deploy
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - master
 
 jobs:
-  deploy:
+  heroku-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

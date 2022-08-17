@@ -1,4 +1,15 @@
-.PHONY: start generate_token get_twitter_user_id build test_one_off test_scheduled
+.PHONY: build lint
+
+build:
+	docker build -t funny-tweets-re:one-off --target ONE_OFF . &&\
+		docker build -t funny-tweets-re:scheduled --target SCHEDULED .
+
+lint: 
+	@black . && flake8 .
+
+## Custom
+
+.PHONY: start generate_token get_twitter_user_id test_one_off test_scheduled
 
 generate_token:
 	poetry run python scripts/generate_token.py
@@ -14,7 +25,3 @@ test_one_off:
 
 test_scheduled:
 	docker run --env-file .env funny-tweets-re:scheduled
-
-build:
-	docker build -t funny-tweets-re:one-off --target ONE_OFF . &&\
-		docker build -t funny-tweets-re:scheduled --target SCHEDULED .

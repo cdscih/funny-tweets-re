@@ -1,6 +1,5 @@
 
-[![Heroku Deploy](https://github.com/cdscih/funny-tweets-re/actions/workflows/heroku-deploy.yml/badge.svg)](https://github.com/cdscih/funny-tweets-re/actions/workflows/heroku-deploy.yml)
-
+[![Deploy](https://github.com/cdscih/funny-tweets-re/actions/workflows/deploy.yml/badge.svg)](https://github.com/cdscih/funny-tweets-re/actions/workflows/deploy.yml)
 
 # Description
 

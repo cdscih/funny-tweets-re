@@ -1,11 +1,10 @@
-from entities import Tweet, User
+from entities import Tweet
 
 
-def choose_tweet_to_retweet(tweets: list[Tweet], users: list[User]) -> Tweet:
-    users_map = {usr.id: usr.followers_count for usr in users}
+def choose_tweet_to_retweet(tweets: list[Tweet]) -> Tweet:
     return max(
         tweets,
-        key=lambda t: t.like_count / users_map[t.author_id]
-        if users_map.get(t.author_id, 0) != 0
+        key=lambda t: t.like_count / t.author.followers_count
+        if t.author.followers_count != 0
         else 0,
     )

@@ -11,6 +11,40 @@ class InvalidCredentials(ValueError()):
     ...
 
 
+def build_user(user: dict) -> User:
+    return User(
+        **{
+            "id": user["id"],
+            "name": user["name"],
+            "username": user["username"],
+            "followers_count": user["public_metrics"]["followers_count"],
+        }
+    )
+
+
+def build_tweets(tweets: dict, users: dict) -> list[Tweet]:
+    users_map = {
+        user.id
+        if isinstance(user, User)
+        else user["id"]: user
+        if isinstance(user, User)
+        else build_user(user)
+        for user in users
+    }
+
+    return [
+        Tweet(
+            **{
+                "id": tweet["id"],
+                "author": users_map[tweet["author_id"]],
+                "like_count": tweet["public_metrics"]["like_count"],
+                "url": f"https://twitter.com/{users_map[tweet['author_id']]}/status/{tweet['id']}",
+            }
+        )
+        for tweet in tweets
+    ]
+
+
 class Twitter:
     def __init__(
         self,
@@ -43,16 +77,7 @@ class Twitter:
         )
         res.raise_for_status()
 
-        user = res.json()["data"]
-
-        return User(
-            **{
-                "id": user["id"],
-                "name": user["name"],
-                "username": user["username"],
-                "followers_count": user["public_metrics"]["followers_count"],
-            }
-        )
+        return build_user(res.json()["data"])
 
     def get_followed_users_list(self) -> list[User]:
         logger.info("Retrieving list of users followed by the bot")
@@ -67,17 +92,7 @@ class Twitter:
             logger.info("No users found followed from the bot")
             return []
 
-        return [
-            User(
-                **{
-                    "id": user["id"],
-                    "name": user["name"],
-                    "username": user["username"],
-                    "followers_count": user["public_metrics"]["followers_count"],
-                }
-            )
-            for user in res.json()["data"]
-        ]
+        return [build_user(user) for user in res.json()["data"]]
 
     def get_recent_tweets(self, user: User) -> list[Tweet]:
         logger.info(f"Retrieving tweets of user {user}")
@@ -88,24 +103,9 @@ class Twitter:
         )
         res.raise_for_status()
 
-        tweets = res.json().get("data")
+        return build_tweets(tweets=res.json().get("data", []), users=[user])
 
-        if not tweets:
-            logger.info(f"No recent tweets found for user {user}")
-            return []
-
-        return [
-            Tweet(
-                **{
-                    "id": tweet["id"],
-                    "author_id": tweet["author_id"],
-                    "like_count": tweet["public_metrics"]["like_count"],
-                }
-            )
-            for tweet in tweets
-        ]
-
-    def get_tweets_from_liked(self) -> tuple[list[Tweet], list[User]]:
+    def get_tweets_from_liked(self) -> list[Tweet]:
         logger.info("Retrieving tweets liked from the bot")
 
         res = self.oauth.get(
@@ -119,35 +119,15 @@ class Twitter:
         res.raise_for_status()
 
         if not res.json().get("data"):
-            logger.info("No available liked tweets found")
             return [], []
 
-        tweets = [
-            Tweet(
-                **{
-                    "id": tweet["id"],
-                    "author_id": tweet["author_id"],
-                    "like_count": tweet["public_metrics"]["like_count"],
-                }
-            )
-            for tweet in res.json()["data"]
-        ]
+        tweets = build_tweets(
+            tweets=res.json().get("data", []), users=res.json()["includes"]["users"]
+        )
 
-        users = [
-            User(
-                **{
-                    "id": user["id"],
-                    "name": user["name"],
-                    "username": user["username"],
-                    "followers_count": user["public_metrics"]["followers_count"],
-                }
-            )
-            for user in res.json()["includes"]["users"]
-        ]
+        return tweets
 
-        return tweets, users
-
-    def get_tweets_from_owner_mentions(self) -> tuple[list[Tweet], list[User]]:
+    def get_tweets_from_owner_mentions(self) -> list[Tweet]:
         logger.info("Retrieving tweets from the owner's mentions of the bot")
 
         res = self.oauth.get(
@@ -164,33 +144,11 @@ class Twitter:
         data = res.json().get("includes")
 
         if not data:
-            logger.info("No available tweets found from owner mentions")
             return [], []
 
-        tweets = [
-            Tweet(
-                **{
-                    "id": tweet["id"],
-                    "author_id": tweet["author_id"],
-                    "like_count": tweet["public_metrics"]["like_count"],
-                }
-            )
-            for tweet in data["tweets"]
-        ]
+        tweets = build_tweets(tweets=data["tweets"], users=data["users"])
 
-        users = [
-            User(
-                **{
-                    "id": user["id"],
-                    "name": user["name"],
-                    "username": user["username"],
-                    "followers_count": user["public_metrics"]["followers_count"],
-                }
-            )
-            for user in data["users"]
-        ]
-
-        return tweets, users
+        return tweets
 
     def post_retweet(self, tweet: Tweet):
         logger.info(f"Posting retweet for tweet {tweet}")

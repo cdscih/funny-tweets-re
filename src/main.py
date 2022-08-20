@@ -7,6 +7,7 @@ import schedule
 
 from adapters.twitter import Twitter
 from adapters.firestore import Firestore
+from entities import Tweet
 from utils import choose_tweet_to_retweet
 
 logging.basicConfig(
@@ -41,26 +42,30 @@ def launch():
     try:
         posted_retweets = fs.get_posted_retweets()
 
+        def exclude_already_posted(tweets: list[Tweet]) -> list[Tweet]:
+            return list(filter(lambda t: t.id not in posted_retweets, tweets))
+
         # 1st priority to mentions from owner
-        tweets, users = tw.get_tweets_from_owner_mentions()
-        tweets = list(filter(lambda t: t.id not in posted_retweets, tweets))
+        tweets = exclude_already_posted(tw.get_tweets_from_owner_mentions())
 
         # 2nd priority to tweets liked
         if len(tweets) == 0:
-            tweets, users = tw.get_tweets_from_liked()
+            logger.info("No available tweets found from owner mentions")
+            tweets = exclude_already_posted(tw.get_tweets_from_liked())
             tweets = list(filter(lambda t: t.id not in posted_retweets, tweets))
 
         # 3rd priority to tweets of followed users
         if len(tweets) == 0:
+            logger.info("No available liked tweets found")
             users = tw.get_followed_users_list()
             for user in users:
                 tweets.extend(tw.get_recent_tweets(user))
-            tweets = list(filter(lambda t: t.id not in posted_retweets, tweets))
+            tweets = exclude_already_posted(tweets)
 
         if len(tweets) == 0:
             raise ValueError("No retweets candidate found")
 
-        chosen_tweet = choose_tweet_to_retweet(tweets, users)
+        chosen_tweet = choose_tweet_to_retweet(tweets)
 
         tw.post_retweet(chosen_tweet)
         fs.save_posted_retweet(chosen_tweet)

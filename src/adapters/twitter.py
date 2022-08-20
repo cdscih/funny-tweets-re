@@ -22,7 +22,7 @@ def build_user(user: dict) -> User:
     )
 
 
-def build_tweets(tweets: dict, users: dict) -> list[Tweet]:
+def build_tweets(tweets: list[dict], users: list[dict]) -> list[Tweet]:
     users_map = {
         user.id
         if isinstance(user, User)
@@ -119,10 +119,10 @@ class Twitter:
         res.raise_for_status()
 
         if not res.json().get("data"):
-            return [], []
+            return []
 
         tweets = build_tweets(
-            tweets=res.json().get("data", []), users=res.json()["includes"]["users"]
+            tweets=res.json()["data"], users=res.json()["includes"]["users"]
         )
 
         return tweets
@@ -144,7 +144,7 @@ class Twitter:
         data = res.json().get("includes")
 
         if not data:
-            return [], []
+            return []
 
         tweets = build_tweets(tweets=data["tweets"], users=data["users"])
 

@@ -40,18 +40,26 @@ fs = Firestore(
 def launch():
     try:
         posted_retweets = fs.get_posted_retweets()
+        recurring_posted_retweets = fs.get_posted_retweets(recurring=True)
+
+        is_recurring_tweet = True
 
         # 1st priority to mentions from owner
-        tweets, users = tw.get_tweets_from_owner_mentions()
-        tweets = list(filter(lambda t: t.id not in posted_retweets, tweets))
+        tweets = tw.get_tweets_from_owner_mentions()
+        tweets = list(filter(lambda t: t.id not in recurring_posted_retweets, tweets))
 
         # 2nd priority to tweets liked
         if len(tweets) == 0:
-            tweets, users = tw.get_tweets_from_liked()
-            tweets = list(filter(lambda t: t.id not in posted_retweets, tweets))
+            logger.info("No available tweets found from owner mentions")
+            tweets = tw.get_tweets_from_liked()
+            tweets = list(
+                filter(lambda t: t.id not in recurring_posted_retweets, tweets)
+            )
 
         # 3rd priority to tweets of followed users
         if len(tweets) == 0:
+            logger.info("No available liked tweets found")
+            is_recurring_tweet = False
             users = tw.get_followed_users_list()
             for user in users:
                 tweets.extend(tw.get_recent_tweets(user))
@@ -60,10 +68,10 @@ def launch():
         if len(tweets) == 0:
             raise ValueError("No retweets candidate found")
 
-        chosen_tweet = choose_tweet_to_retweet(tweets, users)
+        chosen_tweet = choose_tweet_to_retweet(tweets)
 
         tw.post_retweet(chosen_tweet)
-        fs.save_posted_retweet(chosen_tweet)
+        fs.save_posted_retweet(chosen_tweet, is_recurring_tweet)
 
     except Exception as err:
         logger.error(err)

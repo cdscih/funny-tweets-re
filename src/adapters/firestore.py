@@ -10,10 +10,19 @@ from entities import Tweet
 logger = logging.getLogger(__name__)
 
 
+POSTED_RETWEETS_COLLECTION = (
+    "posted_retweets",
+    int(os.environ.get("EXPIRE_AFTER_DAYS", 7)),
+)
+RECURRING_POSTED_RETWEETS_COLLECTION = (
+    "recurring_posted_retweets",
+    int(os.environ.get("RECURRING_EXPIRE_AFTER_DAYS", 365)),
+)
+
+COLLECTIONS = [POSTED_RETWEETS_COLLECTION, RECURRING_POSTED_RETWEETS_COLLECTION]
+
+
 class Firestore:
-
-    POSTED_RETWEETS_COLLECTION = "posted_retweets"
-
     def __init__(self, service_account: str):
         cred = credentials.Certificate(service_account)
         firebase_admin.initialize_app(cred)
@@ -21,28 +30,28 @@ class Firestore:
         self._cleanup()
 
     def _cleanup(self):
-        logger.info(f"Cleaning up {self.POSTED_RETWEETS_COLLECTION} collection")
-        for doc in self.client.collection(self.POSTED_RETWEETS_COLLECTION).get():
-            if doc.create_time < pendulum.now().subtract(
-                months=int(os.environ.get("EXPIRE_AFTER_MONTHS", 1))
-            ):
-                self.client.collection(self.POSTED_RETWEETS_COLLECTION).document(
-                    doc.id
-                ).delete()
+        for coll, exp_days in COLLECTIONS:
+            logger.info(
+                f"Cleaning up {coll} collection removing older than {exp_days} days"
+            )
+            for doc in self.client.collection(coll).get():
+                if doc.create_time < pendulum.now().subtract(days=exp_days):
+                    self.client.collection(coll).document(doc.id).delete()
 
-    def save_posted_retweet(self, tweet: Tweet):
-        logger.info("Storing posted retweet")
-        self.client.collection(self.POSTED_RETWEETS_COLLECTION).document(tweet.id).set(
-            {
-                "tweet_id": tweet.id,
-                "author_id": tweet.author_id,
-                "like_count": tweet.like_count,
-            }
+    def save_posted_retweet(self, tweet: Tweet, recurring=False):
+        collection = (
+            POSTED_RETWEETS_COLLECTION[0]
+            if not recurring
+            else RECURRING_POSTED_RETWEETS_COLLECTION[0]
         )
+        logger.info(f"Storing posted retweet in collection {collection}")
+        self.client.collection(collection).document(tweet.id).set(tweet.dict())
 
-    def get_posted_retweets(self):
-        logger.info("Retrieving posted retweets")
-        return {
-            doc.id
-            for doc in self.client.collection(self.POSTED_RETWEETS_COLLECTION).get()
-        }
+    def get_posted_retweets(self, recurring=False):
+        collection = (
+            POSTED_RETWEETS_COLLECTION[0]
+            if not recurring
+            else RECURRING_POSTED_RETWEETS_COLLECTION[0]
+        )
+        logger.info(f"Retrieving tweets from collection {collection}")
+        return {doc.id for doc in self.client.collection(collection).get()}

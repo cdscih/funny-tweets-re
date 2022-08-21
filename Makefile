@@ -25,3 +25,6 @@ test_one_off:
 
 test_scheduled:
 	docker run --env-file .env funny-tweets-re:scheduled
+
+test:
+	echo "fake tests"

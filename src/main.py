@@ -1,45 +1,23 @@
-import os
 import sys
-import json
 import time
 import logging
 import schedule
 
+from config import CONFIG
 from adapters.twitter import Twitter
 from adapters.firestore import Firestore
 from entities import Tweet
 from utils import choose_tweet_to_retweet
 
-logging.basicConfig(
-    level=os.environ.get("LOGGER_LEVEL", "INFO"),
-    format="%(asctime)s | %(name)s | %(levelname)s | %(message)s",
-)
-
 
 logger = logging.getLogger(__name__)
-
-tw = Twitter(
-    **{
-        "owner_user_id": os.environ.get("OWNER_USER_ID"),
-        "consumer_key": os.environ.get("API_KEY"),
-        "consumer_secret": os.environ.get("API_SECRET_KEY"),
-        "access_token": os.environ.get("ACCESS_TOKEN"),
-        "access_token_secret": os.environ.get("ACCESS_TOKEN_SECRET"),
-    }
-)
-
-fs = Firestore(
-    **{
-        "service_account": json.loads(
-            os.environ.get("GOOGLE_SERVICE_ACCOUNT"),
-            strict=False,
-        )
-    }
-)
 
 
 def launch():
     try:
+        tw = Twitter(**CONFIG["adapters"]["twitter"])
+        fs = Firestore(**CONFIG["adapters"]["firebase"])
+
         posted_retweets = fs.get_posted_retweets()
 
         def exclude_already_posted(tweets: list[Tweet]) -> list[Tweet]:
@@ -79,7 +57,7 @@ if __name__ == "__main__":
     launch()
     if len(sys.argv) > 1:
         if "--scheduled" in sys.argv:
-            schedule_every_hours = int(os.environ.get("SCHEDULE_EVERY_HOURS", 6))
+            schedule_every_hours = CONFIG["schedule_every_hours"]
             logger.info(
                 f"Scheduling the job to be run every {schedule_every_hours} hours"
             )

@@ -1,6 +1,7 @@
 import pendulum
 import logging
 import firebase_admin
+import firebase_admin.firestore as firestore
 
 from types import SimpleNamespace
 
@@ -19,7 +20,7 @@ class Firestore:
         self.POSTED_RETWEETS_COLLECTION.expiration = collection_expire_after_days
         cred = firebase_admin.credentials.Certificate(service_account)
         firebase_admin.initialize_app(cred)
-        self.client = firebase_admin.firestore.client()
+        self.client = firestore.client()
         self._cleanup()
 
     def _cleanup(self):

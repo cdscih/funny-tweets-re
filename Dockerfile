@@ -1,4 +1,4 @@
-FROM python:3.9-slim AS BUILD
+FROM python:3.9-slim AS build
 ARG POETRY_VERSION=1.1.13
 RUN apt-get update && \
   apt-get install --no-install-suggests --no-install-recommends --yes python3-venv gcc libpython3-dev && \
@@ -19,7 +19,7 @@ RUN /venv/bin/pip install --disable-pip-version-check -r /requirements.txt
 
 #### DEV
 FROM mcr.microsoft.com/vscode/devcontainers/python:3.9-bullseye as DEV
-COPY --from=BUILD /venv /venv
+COPY --from=build /venv /venv
 
 ENV PATH=/venv/bin:$PATH
 ENV PYTHONPATH=/workspace/src
@@ -34,7 +34,7 @@ RUN curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-c
 
 
 ### CI 
-FROM BUILD as ci-build
+FROM build as ci-build
 
 ENV PATH=/venv/bin:$PATH
 ENV PYTHONPATH=/workspace/src
@@ -47,7 +47,7 @@ RUN poetry install
 
 ### PROD
 FROM python:3.9-slim as prod
-COPY --from=BUILD /venv/lib/python3.9/ /usr/local/lib/python3.9/
+COPY --from=build /venv/lib/python3.9/ /usr/local/lib/python3.9/
 
 COPY src/ src/
 

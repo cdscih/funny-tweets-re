@@ -1,13 +1,16 @@
-.PHONY: build lint
+.PHONY: build style
 
 build:
 	docker build -t funny-tweets-re:one-off --target ONE_OFF . &&\
 		docker build -t funny-tweets-re:scheduled --target SCHEDULED .
 
-lint: 
-	@black . && flake8 .
+format:
+	@black .
 
-## Custom
+lint: 
+	@flake8 .
+
+style: format lint
 
 .PHONY: start generate_token get_twitter_user_id test_one_off test_scheduled
 
@@ -27,4 +30,4 @@ test_scheduled:
 	docker run --env-file .env funny-tweets-re:scheduled
 
 test:
-	echo "fake tests"
+	poetry run pytest

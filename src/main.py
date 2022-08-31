@@ -12,12 +12,12 @@ from utils import choose_tweet_to_retweet
 
 logger = logging.getLogger(__name__)
 
+tw = Twitter(**CONFIG["adapters"]["twitter"])
+fs = Firestore(**CONFIG["adapters"]["firebase"])
+
 
 def launch():
     try:
-        tw = Twitter(**CONFIG["adapters"]["twitter"])
-        fs = Firestore(**CONFIG["adapters"]["firebase"])
-
         posted_retweets = fs.get_posted_retweets()
 
         def exclude_already_posted(tweets: list[Tweet]) -> list[Tweet]:

@@ -21,7 +21,6 @@ class Firestore:
         cred = firebase_admin.credentials.Certificate(service_account)
         firebase_admin.initialize_app(cred)
         self.client = firestore.client()
-        self._cleanup()
 
     def _cleanup(self):
         collection, exp_days = (
@@ -36,6 +35,7 @@ class Firestore:
                 self.client.collection(collection).document(doc.id).delete()
 
     def save_posted_retweet(self, tweet: Tweet):
+        self._cleanup()
         collection = self.POSTED_RETWEETS_COLLECTION.name
         logger.info(f"Storing posted retweet in collection {collection}")
         self.client.collection(collection).document(tweet.id).set(tweet.dict())

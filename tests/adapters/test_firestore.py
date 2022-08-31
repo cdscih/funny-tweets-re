@@ -50,11 +50,13 @@ def test__cleanup(fs: Firestore, mocker, fs_config):
 def test_save_posted_retweet(fs: Firestore, mocker, application_tweet_example: Tweet):
 
     fs.client.collection = mocker.Mock()
+    fs._cleanup = mocker.Mock()
     fs.client.collection.return_value.document = mocker.Mock()
     fs.client.collection.return_value.document.return_value.set = mocker.Mock()
 
     fs.save_posted_retweet(application_tweet_example)
 
+    fs._cleanup.assert_called_once()
     fs.client.collection.assert_called_once_with(fs.POSTED_RETWEETS_COLLECTION.name)
     fs.client.collection.return_value.document.assert_called_once_with(
         application_tweet_example.id

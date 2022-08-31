@@ -5,4 +5,4 @@ repos:
         name: linting-and-formatting
         stages: [commit]
         language: system
-        entry: make lint
+        entry: make style

@@ -16,7 +16,6 @@ COPY pyproject.toml poetry.lock /
 RUN /venv/bin/poetry export --with-credentials --format requirements.txt --output /requirements.txt
 RUN /venv/bin/pip install --disable-pip-version-check -r /requirements.txt
 
-
 #### DEV
 FROM mcr.microsoft.com/vscode/devcontainers/python:3.9-bullseye as DEV
 COPY --from=build /venv /venv
@@ -31,7 +30,6 @@ RUN apt-get update; \
 
 RUN curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
   chmod +x /usr/local/bin/docker-compose
-
 
 ### CI 
 FROM build as ci-build
@@ -52,7 +50,9 @@ COPY --from=build /venv/lib/python3.9/ /usr/local/lib/python3.9/
 COPY src/ src/
 
 FROM prod as ONE_OFF
+USER 1001
 CMD ["python", "src/main.py"]
 
 FROM prod as SCHEDULED
+USER 1001
 CMD ["python", "src/main.py", "--scheduled"]

@@ -1,8 +1,0 @@
-repos:
-  - repo: local
-    hooks:
-      - id: linting-and-formatting
-        name: linting-and-formatting
-        stages: [commit]
-        language: system
-        entry: make style

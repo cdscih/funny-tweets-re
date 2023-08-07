@@ -2,7 +2,7 @@
 name = "funny-tweets-re"
 version = "0.1.0"
 description = "Funny tweets retweet bot"
-authors = ["Claudio <claudio.work69@gmail.com>"]
+authors = ["cdscih <cdscih@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
